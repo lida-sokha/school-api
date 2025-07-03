@@ -1,3 +1,4 @@
+import { or } from 'sequelize';
 import db from '../models/index.js';
 
 /**
@@ -61,24 +62,31 @@ export const createCourse = async (req, res) => {
  */
 export const getAllCourses = async (req, res) => {
 
-    // take certain amount at a time
-    const limit = parseInt(req.query.limit) || 10;
-    // which page to take
-    const page = parseInt(req.query.page) || 1;
-
-    const total = await db.Course.count();
-
     try {
-        const courses = await db.Course.findAll(
-            {
-                // include: [db.Student, db.Teacher],
-                limit: limit, offset: (page - 1) * limit
-            }
-        );
-        res.json({
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const offset = (page - 1) * limit;
+
+        const sort = req.query.sort === 'desc' ? 'DESC' : 'ASC';
+        const include =[];
+        const populate = req.query.populate;
+        if(populate === 'teacher') include.push(db.Teacher);
+        if(populate === 'students') include.push(db.Student);
+        if(populate === 'all') include.push(db.Teacher, db.Student);
+
+        const total = await db.Course.count();
+
+        const courses = await db.Course.findAll({
+            limit,
+            offset,
+            order: [['createdAt', sort]],
+            include,
+        });
+
+         res.json({
             meta: {
                 totalItems: total,
-                page: page,
+                page,
                 totalPages: Math.ceil(total / limit),
             },
             data: courses,

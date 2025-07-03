@@ -1,3 +1,4 @@
+import { parse } from 'dotenv';
 import db from '../models/index.js';
 
 /**
@@ -27,10 +28,31 @@ export const createStudent = async (req, res) => {
  *         description: List of students
  */
 export const getAllStudents = async (req, res) => {
-    try {
-        const students = await db.Student.findAll({ include: db.Course });
-        res.json(students);
-    } catch (err) {
+    try{
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) || 1;
+        const offset = (page - 1) * limit;
+
+        const sortOrder = req.query.sort === 'desc' ? 'DESC' : 'ASC';
+
+         // Eager loading
+        const include = [];
+        if (req.query.populate === 'course' || req.query.populate === 'courses') {
+            include.push(db.Course);
+        }
+         const result = await db.Student.findAndCountAll({
+            limit,
+            offset,
+            order: [['createdAt', sortOrder]],
+            include,
+        });
+        res.json({
+            totalItems: result.count,
+            totalPages: Math.ceil(result.count / limit),
+            currentPage: page,
+            data: result.rows,
+        });
+    }catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
