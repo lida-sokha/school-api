@@ -50,8 +50,35 @@ export const createTeacher = async (req, res) => {
  */
 export const getAllTeachers = async (req, res) => {
     try {
-        const teachers = await db.Teacher.findAll({ include: db.Course });
-        res.json(teachers);
+        const limit = parseInt(req.query.limit) || 10;
+        const page = parseInt(req.query.page) ||1;
+        const offset = (page - 1) * limit;
+
+        const sort = req.query.sort === 'desc' ? 'DESC' : 'ASC';
+        const include =[];
+        const populate = req.query.populate;
+
+        if (populate === 'course' || populate === 'courses') {
+            include.push(db.Course);
+        }
+        const total = await db.Teacher.count();
+
+        const teachers = await db.Teacher.findAll({
+            limit,
+            offset,
+            order:[['createdAt', sort]],
+            include,
+        });
+
+        res.json({
+            meta: {
+                totalItems: total,
+                page,
+                totalPages: Math.ceil(total / limit),
+            },
+            data: teachers,
+        });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -59,21 +86,41 @@ export const getAllTeachers = async (req, res) => {
 
 /**
  * @swagger
- * /teachers/{id}:
+ * /teachers:
  *   get:
- *     summary: Get a teacher by ID
+ *     summary: Get all teachers
  *     tags: [Teachers]
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of teachers per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sort by creation time
+ *       - in: query
+ *         name: populate
+ *         schema:
+ *           type: string
+ *           enum: [courses, all]
+ *         description: Include related models like courses
  *     responses:
  *       200:
- *         description: Teacher found
- *       404:
- *         description: Not found
+ *         description: List of teachers
  */
+
 export const getTeacherById = async (req, res) => {
     try {
         const teacher = await db.Teacher.findByPk(req.params.id, { include: db.Course });

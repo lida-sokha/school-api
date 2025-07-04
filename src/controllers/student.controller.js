@@ -23,11 +23,57 @@ export const createStudent = async (req, res) => {
  *   get:
  *     summary: Get all students
  *     tags: [Students]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of students per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sort by created time
+ *       - in: query
+ *         name: populate
+ *         schema:
+ *           type: string
+ *           enum: [course, all]
+ *         description: Include related models in the result
  *     responses:
  *       200:
- *         description: List of students
+ *         description: List of students with optional pagination, sorting, and relations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     totalItems:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Student'
  */
+
 export const getAllStudents = async (req, res) => {
+
     try{
         const limit = parseInt(req.query.limit) || 10;
         const page = parseInt(req.query.page) || 1;

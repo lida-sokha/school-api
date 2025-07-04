@@ -50,16 +50,52 @@ export const createCourse = async (req, res) => {
  *     parameters:
  *       - in: query
  *         name: page
- *         schema: { type: integer, default: 1 }
+ *         schema:
+ *           type: integer
+ *           default: 1
  *         description: Page number
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 10 }
+ *         schema:
+ *           type: integer
+ *           default: 10
  *         description: Number of items per page
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Sort order by creation time
+ *       - in: query
+ *         name: populate
+ *         schema:
+ *           type: string
+ *           enum: [teacher, students, all]
+ *         description: Include related models in the result
  *     responses:
  *       200:
- *         description: List of courses
+ *         description: List of courses with optional pagination, sorting, and relations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     totalItems:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Course'
  */
+
 export const getAllCourses = async (req, res) => {
 
     try {
