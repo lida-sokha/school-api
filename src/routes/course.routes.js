@@ -1,13 +1,17 @@
 import express from 'express';
+import authMiddleware from '../middlewares/authMiddleware.js';
 import {
-    createCourse,
-    getAllCourses,
-    getCourseById,
-    updateCourse,
-    deleteCourse
+  createCourse,
+  getAllCourses,
+  getCourseById,
+  updateCourse,
+  deleteCourse
 } from '../controllers/course.controller.js';
 
 const router = express.Router();
+
+// ✅ Protect all course routes
+router.use(authMiddleware);
 
 router.post('/', createCourse);
 router.get('/', getAllCourses);

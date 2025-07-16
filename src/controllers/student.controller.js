@@ -3,9 +3,25 @@ import db from '../models/index.js';
 
 /**
  * @swagger
- * tags:
- *   name: Students
- *   description: Student management
+ * /students:
+ *   post:
+ *     summary: Create a new student
+ *     tags: [Students]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Student'  # Make sure you have this schema defined below in your Swagger config
+ *     responses:
+ *       201:
+ *         description: The created student
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Student'
+ *       500:
+ *         description: Server error
  */
 
 export const createStudent = async (req, res) => {
@@ -73,35 +89,33 @@ export const createStudent = async (req, res) => {
  */
 
 export const getAllStudents = async (req, res) => {
-
-    try{
-        const limit = parseInt(req.query.limit) || 10;
-        const page = parseInt(req.query.page) || 1;
-        const offset = (page - 1) * limit;
-
-        const sortOrder = req.query.sort === 'desc' ? 'DESC' : 'ASC';
-
-         // Eager loading
-        const include = [];
-        if (req.query.populate === 'course' || req.query.populate === 'courses') {
-            include.push(db.Course);
-        }
-         const result = await db.Student.findAndCountAll({
-            limit,
-            offset,
-            order: [['createdAt', sortOrder]],
-            include,
-        });
-        res.json({
-            totalItems: result.count,
-            totalPages: Math.ceil(result.count / limit),
-            currentPage: page,
-            data: result.rows,
-        });
-    }catch (err) {
-        res.status(500).json({ error: err.message });
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
+    const sortOrder = req.query.sort === 'desc' ? 'DESC' : 'ASC';
+    const include = [];
+    if (req.query.populate === 'course' || req.query.populate === 'courses') {
+      include.push(db.Course);
     }
+    const result = await db.Student.findAndCountAll({
+      limit,
+      offset,
+      order: [['createdAt', sortOrder]],
+      include,
+    });
+    res.json({
+      totalItems: result.count,
+      totalPages: Math.ceil(result.count / limit),
+      currentPage: page,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error('Error in getAllStudents:', err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 /**
  * @swagger

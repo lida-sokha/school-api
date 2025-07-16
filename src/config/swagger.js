@@ -9,7 +9,32 @@ const options = {
       version: '1.0.0',
       description: 'API for managing students, courses, and teachers',
     },
+    tags: [
+    {
+      name: 'Auth',
+      description: 'Authentication related endpoints',
+    },
+    {
+      name: 'Students',
+      description: 'Student management',
+    },
+    {
+      name: 'Courses',
+      description: 'Course management',
+    },
+    {
+      name: 'Teachers',
+      description: 'Teacher management',
+    }
+  ],
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT', // Optional: just to show it's JWT
+        }
+      },
       schemas: {
         Student: {
           type: 'object',
