@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import db from '../models/index.js'; // Adjust path if needed
+import db from '../models/index.js';
 
 const JWT_SECRET = 'your_secret_key'; // Ideally use process.env.JWT_SECRET
+
 /**
  * @swagger
  * /auth/register:
@@ -37,32 +38,64 @@ const JWT_SECRET = 'your_secret_key'; // Ideally use process.env.JWT_SECRET
  *       500:
  *         description: Server error
  */
-
-// Register user
+// Update the register function to return a token like login does
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
+  
+  // Add validation
+  if (!name || !email || !password) {
+    return res.status(400).json({ 
+      success: false,
+      message: 'All fields are required' 
+    });
+  }
+
   try {
-    // Check if user already exists
     const existingUser = await db.User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email already in use' 
+      });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     const newUser = await db.User.create({
       name,
       email,
       password: hashedPassword,
     });
 
-    res.status(201).json({ message: 'User registered', user: newUser });
+    // Generate token for new user (just like login)
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Return token and user info (excluding password)
+    res.status(201).json({ 
+      success: true,
+      message: 'Registration successful',
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email
+      }
+    });
+    
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Registration error:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Registration failed',
+      error: err.message 
+    });
   }
 };
+
 /**
  * @swagger
  * /auth/login:
@@ -101,8 +134,6 @@ export const register = async (req, res) => {
  *       500:
  *         description: Server error
  */
-
-// Login user
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -116,7 +147,6 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Create token
     const token = jwt.sign(
       { id: user.id, email: user.email },
       JWT_SECRET,
@@ -128,6 +158,7 @@ export const login = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 /**
  * @swagger
  * /auth/user:
@@ -156,14 +187,14 @@ export const login = async (req, res) => {
  *       500:
  *         description: Server error
  */
-router.get('/user', async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const userList = await db.User.findAll({
-      attributes: ['id', 'name', 'email'], // only select safe fields
+      attributes: ['id', 'name', 'email'],
     });
 
     res.json(userList);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
-});
+};
